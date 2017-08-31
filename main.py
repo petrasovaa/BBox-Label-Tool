@@ -60,7 +60,12 @@ class LabelTool():
         self.entry = Entry(self.frame)
         self.entry.grid(row = 0, column = 1, sticky = W+E)
         self.ldBtn = Button(self.frame, text = "Load", command = self.loadDir)
-        self.ldBtn.grid(row = 0, column = 2, sticky = W+E)
+        self.ldBtn.grid(row = 0, column = 2, rowspan=2, sticky = W+E+S+N)
+        
+        self.label2 = Label(self.frame, text = "Label Dir:")
+        self.label2.grid(row = 1, column = 0, sticky = E)
+        self.entry2 = Entry(self.frame)
+        self.entry2.grid(row = 1, column = 1, sticky = W+E)
 
         # main panel for labeling
         self.mainPanel = Canvas(self.frame, cursor='tcross')
@@ -70,21 +75,21 @@ class LabelTool():
         self.parent.bind("s", self.cancelBBox)
         self.parent.bind("a", self.prevImage) # press 'a' to go backforward
         self.parent.bind("d", self.nextImage) # press 'd' to go forward
-        self.mainPanel.grid(row = 1, column = 1, rowspan = 4, sticky = W+N)
+        self.mainPanel.grid(row = 2, column = 1, rowspan = 4, sticky = W+N)
 
         # showing bbox info & delete bbox
         self.lb1 = Label(self.frame, text = 'Bounding boxes:')
-        self.lb1.grid(row = 1, column = 2,  sticky = W+N)
+        self.lb1.grid(row = 2, column = 2,  sticky = W+N)
         self.listbox = Listbox(self.frame, width = 22, height = 12)
-        self.listbox.grid(row = 2, column = 2, sticky = N)
+        self.listbox.grid(row = 3, column = 2, sticky = N)
         self.btnDel = Button(self.frame, text = 'Delete', command = self.delBBox)
-        self.btnDel.grid(row = 3, column = 2, sticky = W+E+N)
+        self.btnDel.grid(row = 4, column = 2, sticky = W+E+N)
         self.btnClear = Button(self.frame, text = 'ClearAll', command = self.clearBBox)
-        self.btnClear.grid(row = 4, column = 2, sticky = W+E+N)
+        self.btnClear.grid(row = 5, column = 2, sticky = W+E+N)
 
         # control panel for image navigation
         self.ctrPanel = Frame(self.frame)
-        self.ctrPanel.grid(row = 5, column = 1, columnspan = 2, sticky = W+E)
+        self.ctrPanel.grid(row = 6, column = 1, columnspan = 2, sticky = W+E)
         self.prevBtn = Button(self.ctrPanel, text='<< Prev', width = 10, command = self.prevImage)
         self.prevBtn.pack(side = LEFT, padx = 5, pady = 3)
         self.nextBtn = Button(self.ctrPanel, text='Next >>', width = 10, command = self.nextImage)
@@ -100,7 +105,7 @@ class LabelTool():
 
         # example pannel for illustration
         self.egPanel = Frame(self.frame, border = 10)
-        self.egPanel.grid(row = 1, column = 0, rowspan = 5, sticky = N)
+        self.egPanel.grid(row = 2, column = 0, rowspan = 5, sticky = N)
         self.tmpLabel2 = Label(self.egPanel, text = "Examples:")
         self.tmpLabel2.pack(side = TOP, pady = 5)
         self.egLabels = []
@@ -131,7 +136,7 @@ class LabelTool():
 ##            return
         # get image list
         self.imageDir = s
-        self.imageList = sorted(glob.glob(os.path.join(self.imageDir, '*.JPG')))
+        self.imageList = sorted(glob.glob(os.path.join(self.imageDir, '*.jpg')))
         if len(self.imageList) == 0:
             print 'No .JPEG images found in the specified dir!'
             return
@@ -141,7 +146,7 @@ class LabelTool():
         self.total = len(self.imageList)
 
          # set up output dir
-        self.outDir = os.getcwd()
+        self.outDir = self.entry2.get()
 #        if not os.path.exists(self.outDir):
 #            os.mkdir(self.outDir)
 
