@@ -141,7 +141,7 @@ class LabelTool():
         self.total = len(self.imageList)
 
          # set up output dir
-        self.outDir = os.path.dirname(os.path.realpath(__file__))
+        self.outDir = os.getcwd()
 #        if not os.path.exists(self.outDir):
 #            os.mkdir(self.outDir)
 
