@@ -40,6 +40,7 @@ class LabelTool():
         self.imagename = ''
         self.labelfilename = ''
         self.tkimg = None
+        self.wpercent = 1
 
         # initialize mouse state
         self.STATE = {}
@@ -175,6 +176,11 @@ class LabelTool():
         # load image
         imagepath = self.imageList[self.cur - 1]
         self.img = Image.open(imagepath)
+        basewidth = 1000
+        self.wpercent = (basewidth / float(self.img.size[0]))     
+        hsize = int((float(self.img.size[1]) * float(self.wpercent)))
+        self.img = self.img.resize((basewidth, hsize), Image.ANTIALIAS)
+
         self.tkimg = ImageTk.PhotoImage(self.img)
         self.mainPanel.config(width = max(self.tkimg.width(), 400), height = max(self.tkimg.height(), 400))
         self.mainPanel.create_image(0, 0, image = self.tkimg, anchor=NW)
@@ -192,11 +198,11 @@ class LabelTool():
                     if i == 0:
                         bbox_cnt = int(line.strip())
                         continue
-                    tmp = [int(t.strip()) for t in line.split()]
+                    tmp = [int(float(t.strip())) for t in line.split()]
 ##                    print tmp
                     self.bboxList.append(tuple(tmp))
-                    tmpId = self.mainPanel.create_rectangle(tmp[0], tmp[1], \
-                                                            tmp[2], tmp[3], \
+                    tmpId = self.mainPanel.create_rectangle(self.wpercent * tmp[0], self.wpercent * tmp[1], \
+                                                            self.wpercent * tmp[2], self.wpercent *tmp[3], \
                                                             width = 2, \
                                                             outline = COLORS[(len(self.bboxList)-1) % len(COLORS)])
                     self.bboxIdList.append(tmpId)
@@ -217,15 +223,15 @@ class LabelTool():
         else:
             x1, x2 = min(self.STATE['x'], event.x), max(self.STATE['x'], event.x)
             y1, y2 = min(self.STATE['y'], event.y), max(self.STATE['y'], event.y)
-            self.bboxList.append((x1, y1, x2, y2))
+            self.bboxList.append((x1 / self.wpercent, y1 / self.wpercent, x2 / self.wpercent, y2 / self.wpercent))
             self.bboxIdList.append(self.bboxId)
             self.bboxId = None
-            self.listbox.insert(END, '(%d, %d) -> (%d, %d)' %(x1, y1, x2, y2))
+            self.listbox.insert(END, '(%d, %d) -> (%d, %d)' %(x1 / self.wpercent, y1 / self.wpercent, x2 / self.wpercent, y2 / self.wpercent))
             self.listbox.itemconfig(len(self.bboxIdList) - 1, fg = COLORS[(len(self.bboxIdList) - 1) % len(COLORS)])
         self.STATE['click'] = 1 - self.STATE['click']
 
     def mouseMove(self, event):
-        self.disp.config(text = 'x: %d, y: %d' %(event.x, event.y))
+        self.disp.config(text = 'x: %d, y: %d' %(event.x / self.wpercent, event.y / self.wpercent))
         if self.tkimg:
             if self.hl:
                 self.mainPanel.delete(self.hl)
