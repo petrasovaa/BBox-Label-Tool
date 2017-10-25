@@ -10,6 +10,7 @@ from __future__ import division
 from Tkinter import *
 import tkMessageBox
 from PIL import Image, ImageTk
+import ttk
 import os
 import glob
 import random
@@ -41,6 +42,9 @@ class LabelTool():
         self.labelfilename = ''
         self.tkimg = None
         self.wpercent = 1
+        self.currentLabelclass = ''
+        self.cla_can_temp = []
+        self.classcandidate_filename = 'class.txt'
 
         # initialize mouse state
         self.STATE = {}
@@ -76,21 +80,34 @@ class LabelTool():
         self.parent.bind("s", self.cancelBBox)
         self.parent.bind("a", self.prevImage) # press 'a' to go backforward
         self.parent.bind("d", self.nextImage) # press 'd' to go forward
-        self.mainPanel.grid(row = 2, column = 1, rowspan = 4, sticky = W+N)
+        self.mainPanel.grid(row = 2, column = 1, rowspan = 5, sticky = W+N)
+
+        # choose class
+        self.classname = StringVar()
+        self.classcandidate = ttk.Combobox(self.frame,state='readonly',textvariable=self.classname)
+        self.classcandidate.grid(row=2,column=2)
+        if os.path.exists(self.classcandidate_filename):
+            with open(self.classcandidate_filename) as cf:
+                for line in cf.readlines():
+                    self.cla_can_temp.append(line.strip('\n'))
+        #print self.cla_can_temp
+        self.classcandidate['values'] = self.cla_can_temp
+        self.classcandidate.current(0)
+        self.currentLabelclass = self.classcandidate.get() #init
 
         # showing bbox info & delete bbox
         self.lb1 = Label(self.frame, text = 'Bounding boxes:')
-        self.lb1.grid(row = 2, column = 2,  sticky = W+N)
+        self.lb1.grid(row = 3, column = 2,  sticky = W+N)
         self.listbox = Listbox(self.frame, width = 22, height = 12)
-        self.listbox.grid(row = 3, column = 2, sticky = N)
+        self.listbox.grid(row = 4, column = 2, sticky = N)
         self.btnDel = Button(self.frame, text = 'Delete', command = self.delBBox)
-        self.btnDel.grid(row = 4, column = 2, sticky = W+E+N)
+        self.btnDel.grid(row = 5, column = 2, sticky = W+E+N)
         self.btnClear = Button(self.frame, text = 'ClearAll', command = self.clearBBox)
-        self.btnClear.grid(row = 5, column = 2, sticky = W+E+N)
+        self.btnClear.grid(row = 6, column = 2, sticky = W+E+N)
 
         # control panel for image navigation
         self.ctrPanel = Frame(self.frame)
-        self.ctrPanel.grid(row = 6, column = 1, columnspan = 2, sticky = W+E)
+        self.ctrPanel.grid(row = 7, column = 1, columnspan = 2, sticky = W+E)
         self.prevBtn = Button(self.ctrPanel, text='<< Prev', width = 10, command = self.prevImage)
         self.prevBtn.pack(side = LEFT, padx = 5, pady = 3)
         self.nextBtn = Button(self.ctrPanel, text='Next >>', width = 10, command = self.nextImage)
@@ -139,7 +156,7 @@ class LabelTool():
         self.imageDir = s
         self.imageList = sorted(glob.glob(os.path.join(self.imageDir, '*.jpg')))
         if len(self.imageList) == 0:
-            print 'No .JPEG images found in the specified dir!'
+            print 'No .jpg images found in the specified dir!'
             return
 
         # default to the 1st image in the collection
@@ -198,15 +215,16 @@ class LabelTool():
                     if i == 0:
                         bbox_cnt = int(line.strip())
                         continue
-                    tmp = [int(float(t.strip())) for t in line.split()]
-##                    print tmp
-                    self.bboxList.append(tuple(tmp))
+                    data = line.split()
+                    cat = data[-1]
+                    tmp = [int(float(t.strip())) for t in data[:-1]]
+                    self.bboxList.append(tuple(tmp + [cat]))
                     tmpId = self.mainPanel.create_rectangle(self.wpercent * tmp[0], self.wpercent * tmp[1], \
                                                             self.wpercent * tmp[2], self.wpercent *tmp[3], \
                                                             width = 2, \
                                                             outline = COLORS[(len(self.bboxList)-1) % len(COLORS)])
                     self.bboxIdList.append(tmpId)
-                    self.listbox.insert(END, '(%d, %d) -> (%d, %d)' %(tmp[0], tmp[1], tmp[2], tmp[3]))
+                    self.listbox.insert(END, '%s: (%d, %d) -> (%d, %d)' %(cat, tmp[0], tmp[1], tmp[2], tmp[3]))
                     self.listbox.itemconfig(len(self.bboxIdList) - 1, fg = COLORS[(len(self.bboxIdList) - 1) % len(COLORS)])
 
     def saveImage(self):
@@ -218,15 +236,16 @@ class LabelTool():
 
 
     def mouseClick(self, event):
+        self.currentLabelclass = self.classcandidate.get()
         if self.STATE['click'] == 0:
             self.STATE['x'], self.STATE['y'] = event.x, event.y
         else:
             x1, x2 = min(self.STATE['x'], event.x), max(self.STATE['x'], event.x)
             y1, y2 = min(self.STATE['y'], event.y), max(self.STATE['y'], event.y)
-            self.bboxList.append((x1 / self.wpercent, y1 / self.wpercent, x2 / self.wpercent, y2 / self.wpercent))
+            self.bboxList.append((x1 / self.wpercent, y1 / self.wpercent, x2 / self.wpercent, y2 / self.wpercent, self.currentLabelclass))
             self.bboxIdList.append(self.bboxId)
             self.bboxId = None
-            self.listbox.insert(END, '(%d, %d) -> (%d, %d)' %(x1 / self.wpercent, y1 / self.wpercent, x2 / self.wpercent, y2 / self.wpercent))
+            self.listbox.insert(END, '%s : (%d, %d) -> (%d, %d)' %(self.currentLabelclass, x1 / self.wpercent, y1 / self.wpercent, x2 / self.wpercent, y2 / self.wpercent))
             self.listbox.itemconfig(len(self.bboxIdList) - 1, fg = COLORS[(len(self.bboxIdList) - 1) % len(COLORS)])
         self.STATE['click'] = 1 - self.STATE['click']
 
