@@ -142,6 +142,14 @@ class LabelTool():
 ##        self.setImage()
 ##        self.loadDir()
 
+    def find_case_insensitive(self, dirname, extensions):
+        found = []
+        for filename in glob.glob(os.path.join(dirname, '*')):
+            base, ext = os.path.splitext(filename)
+            if ext.lower() in extensions:
+                found.append(filename)
+        return found
+
     def loadDir(self, dbg = False):
         if not dbg:
             s = self.entry.get()
@@ -154,7 +162,7 @@ class LabelTool():
 ##            return
         # get image list
         self.imageDir = s
-        self.imageList = sorted(glob.glob(os.path.join(self.imageDir, '*.jpg')))
+        self.imageList = sorted(self.find_case_insensitive(self.imageDir, ['.jpg', '.jpeg']))
         if len(self.imageList) == 0:
             print 'No .jpg images found in the specified dir!'
             return
